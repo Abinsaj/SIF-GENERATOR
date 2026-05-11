@@ -26,11 +26,11 @@ const EmployeeForm = () => {
         return ""
       case "bank":
         if (!value.trim()) return "Bank is required"
-        if (!/^[A-Za-z\s]+$/.test(value)) return "Bank name must contain letters only"
         return ""
       case "accountNumber":
         if (!value.trim()) return "Account number required"
-        if (!/^\d+$/.test(value)) return "Account number must be numeric"
+      
+        if (!/^[A-Za-z0-9]+$/.test(value)) return "Account number must be numeric or alphanumeric"
         return ""
       case "workingDays":
         if (!value) return "Working days is required"
@@ -79,10 +79,10 @@ const EmployeeForm = () => {
     
 
     if (result.success) {
-      alert("SIF File Generated Successfully")
-    
+      // clear form and errors after successful generation
       setFormData(initialFormData)
       setErrors({})
+      alert("SIF File Generated Successfully")
     } else {
       alert(result.error || "Failed to save SIF file")
     }
