@@ -73,13 +73,9 @@ const EmployeeForm = () => {
     if (!validate()) return
 
     const sifContent = generateSIFContent(formData)
-    console.log(sifContent,'this is the data')
-    const result =
-      await window.electronAPI.saveSIFFile(sifContent)
+    const result = await window.electronAPI.saveSIFFile(sifContent)
     
-
     if (result.success) {
-      // clear form and errors after successful generation
       setFormData(initialFormData)
       setErrors({})
       alert("SIF File Generated Successfully")
