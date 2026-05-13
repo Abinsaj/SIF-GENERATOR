@@ -26,7 +26,11 @@
 
     "mac": {
       "target": "dmg"
-    }
+    },
+
+    "win": {
+    "target": "nsis"
+  }
   },
   "dependencies": {
     "react": "^19.2.6",
