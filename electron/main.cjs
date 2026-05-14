@@ -26,7 +26,7 @@ function createWindow() {
     )
   }
 
-  // win.webContents.openDevTools()
+  win.webContents.openDevTools()
 
 }
 
@@ -35,13 +35,13 @@ app.whenReady().then(() => {
   createWindow()
 })
 
-ipcMain.handle("save-sif-file", async (_, content) => {
+ipcMain.handle("save-sif-file", async (_, content,name) => {
   const { filePath } = await dialog.showSaveDialog({
-    defaultPath: "employee.sif",
+    defaultPath: `${name}.csv`,
     filters: [
       {
-        name: "SIF Files",
-        extensions: ["sif"],
+        name: "CSV Files",
+        extensions: ["csv"],
       },
     ],
   })

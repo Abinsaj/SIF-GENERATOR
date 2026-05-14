@@ -8,6 +8,7 @@ const initialFormData = {
   accountNumber: "",
   workingDays: "",
   salary: "",
+  companyName:""
 }
 
 const EmployeeForm = () => {
@@ -16,6 +17,10 @@ const EmployeeForm = () => {
 
   const validateField = (name, value) => {
     switch (name) {
+
+      case "companyName":
+        if (!value.trim()) return "Company Name is required"
+        return ""
       case "qid":
         if (!value) return "QID is required"
         if (!/^\d{11}$/.test(value)) return "QID must be exactly 11 digits"
@@ -73,7 +78,8 @@ const EmployeeForm = () => {
     if (!validate()) return
 
     const sifContent = generateSIFContent(formData)
-    const result = await window.electronAPI.saveSIFFile(sifContent)
+    console.log(sifContent,'this is the sif content')
+    const result = await window.electronAPI.saveSIFFile(sifContent,formData.companyName)
     
     if (result.success) {
       setFormData(initialFormData)
@@ -89,6 +95,8 @@ const EmployeeForm = () => {
       <h1 style={styles.header}>SIF Generator</h1>
 
       <div style={styles.form}>
+
+        <div style={styles.form1}>
         <input
           type="text"
           name="qid"
@@ -108,6 +116,9 @@ const EmployeeForm = () => {
           onChange={handleChange}
         />
         <p style={styles.error}>{errors.name}</p>
+      </div>
+
+ <div style={styles.form1}>
 
         <input
           type="text"
@@ -130,6 +141,11 @@ const EmployeeForm = () => {
           onChange={handleChange}
         />
         <p style={styles.error}>{errors.accountNumber}</p>
+ </div>
+
+ <div style={styles.form1}>
+  
+ </div>
 
         <input
           type="text"
@@ -154,6 +170,17 @@ const EmployeeForm = () => {
         />
         <p style={styles.error}>{errors.salary}</p>
 
+          <input
+          type="text"
+          name= "companyName"
+          style={styles.input}
+          placeholder="companeyName"
+          value={formData.companyName}
+          onChange={handleChange}
+        />
+        <p style={styles.error}>{errors.companyName}</p>
+        
+
         <button onClick={handleGenerate}
         style={styles.button}
         >
@@ -172,14 +199,25 @@ const styles = {
   justifyContent: "center",
   alignItems: "center",
   fontFamily: "Arial",
+  backgroundColor: "#525252ff",
 },
 
 input:{
   height: "35px",
   padding: "2px",
+  width:"100%",
   border: "1px solid #ccc",
   borderRadius: "4px",
   marginBottom: "2px",
+  boxShadow: "0 6px 10px rgba(29, 29, 29, 0.1)",
+},
+
+form1:{
+  display: "flex",
+  flexDirection: "row",
+  justifyContent: "space-between",
+  gap: "6px",
+  width: "full",
 },
 
 button:{
@@ -193,19 +231,22 @@ button:{
 },
 
 error:{
-color: "red",
-fontsize: "8px"
+  color: "red",
+  fontsize: "8px"
 },
 
-  form: {
+form: {
   display: "flex",
   flexDirection: "column",
   gap: "12px",
-  width: "400px",
+  width: "500px",
   padding: "30px",
   borderRadius: "12px",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+  boxShadow: "0 4px 10px rgba(55, 55, 55, 0.1)",
+  backgroundColor: "rgba(115, 114, 114, 0.9)"
 },
+
+
 }
 
 export default EmployeeForm
