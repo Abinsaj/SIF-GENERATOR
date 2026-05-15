@@ -1,6 +1,8 @@
-export const generateSIFContent = (data, options = {}) => {
+export const generateSIFContent = (
+  data,
+  options = {}
+) => {
 
-  console.log('hlooooo')
   const employerHeader = [
     "Employer EID",
     "File Creation Date",
@@ -19,30 +21,49 @@ export const generateSIFContent = (data, options = {}) => {
   ]
 
   const now = new Date()
-  const pad = (n, len = 2) => String(n).padStart(len, "0")
+
+  const pad = (n, len = 2) =>
+    String(n).padStart(len, "0")
+
   const yyyy = now.getFullYear()
+
   const mm = pad(now.getMonth() + 1)
+
   const dd = pad(now.getDate())
-  const fileCreationDate = `${yyyy}${mm}${dd}`
-  const fileCreationTime = `${pad(now.getHours())}${pad(now.getMinutes())}`
+
+  const fileCreationDate =
+    `${yyyy}${mm}${dd}`
+
+  const fileCreationTime =
+    `${pad(now.getHours())}${pad(now.getMinutes())}`
 
   const salaryYearMonth = `${yyyy}${mm}`
 
-  const employees = Array.isArray(options.employees) ? options.employees : (Array.isArray(data) ? data : [data])
-  const totalSalaries = employees.reduce((sum, emp) => {
-    const n = Number(emp.netSalary ?? emp.salary) || 0
-    return sum + n
-  }, 0)
+  const employees =
+    Array.isArray(options.employees)
+      ? options.employees
+      : [data]
+
+  const totalSalaries =
+    employees.reduce((sum, emp) => {
+
+      const salary =
+        Number(emp.netSalary || emp.salary || 0)
+
+      return sum + salary
+
+    }, 0)
+
   const totalRecords = employees.length
 
   const employerRow = [
-    options.employerEid ?? data.employerEid ?? "",
+    options.employerEid || "",
     fileCreationDate,
     fileCreationTime,
-    options.payerEid ?? data.payerEid ?? options.employerEid ?? data.employerEid ?? "",
-    options.payerQid ?? data.payerQid ?? "",
-    options.payerBankShortName ?? data.payerBankShortName ?? "",
-    options.payerIban ?? data.payerIban ?? "",
+    options.payerEid || "",
+    options.payerQid || "",
+    options.payerBankShortName || "",
+    options.payerIban || "",
     salaryYearMonth,
     totalSalaries,
     totalRecords,
@@ -70,33 +91,36 @@ export const generateSIFContent = (data, options = {}) => {
     "Notes / Comments"
   ]
 
-  const employeeRow = [
-    1,
-    data.qid ?? "",
-    data.visaId ?? "",
-    data.name ?? "",
-    data.bank ?? "",
-    data.accountNumber ?? "",
-    data.salaryFrequency ?? "",
-    data.workingDays ?? "",
-    data.netSalary ?? data.salary ?? "",
-    data.basicSalary ?? "",
-    data.extraHours ?? "",
-    data.extraIncome ?? "",
-    data.deductions ?? "",
-    data.paymentType ?? "",
-    data.notes ?? ""
-  ]
+  const employeeRows = employees.map(
+    (emp, index) => [
+      index + 1,
+      emp.qid || "",
+      emp.visaId || "",
+      emp.name || "",
+      emp.bank || "",
+      emp.accountNumber || "",
+      emp.salaryFrequency || "",
+      emp.workingDays || "",
+      emp.netSalary || emp.salary || "",
+      emp.basicSalary || "",
+      emp.extraHours || "",
+      emp.extraIncome || "",
+      emp.deductions || "",
+      emp.paymentType || "",
+      emp.notes || ""
+    ]
+  )
 
   const lines = [
     employerHeader.join(","),
     employerRow.join(","),
-    "", 
+    "",
     employeeHeaders.join(","),
-    employeeRow.join(",")
-  ]
 
-  console.log('first',lines)
+    ...employeeRows.map(row =>
+      row.join(",")
+    )
+  ]
 
   return lines.join("\n")
 }

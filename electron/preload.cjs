@@ -1,8 +1,10 @@
- const {contextBridge, ipcRenderer} = require('electron')
-
+const { contextBridge, ipcRenderer } = require("electron")
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  saveSIFFile: (content,name) =>
-    ipcRenderer.invoke("save-sif-file", content,name),
+
+  saveSIFFile: (payload, name) =>
+    ipcRenderer.invoke("save-sif-file", payload, name),
+
 })
+
 console.log("Preload Loaded")

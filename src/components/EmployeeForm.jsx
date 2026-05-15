@@ -3,11 +3,10 @@ import { generateSIFContent } from "../utils/sifGenerator"
 
 const initialFormData = {
   employerEid: "",
-  payerEid: "",         
-  payerQid: "",        
+  payerEid: "",
+  payerQid: "",
   payerBankShortName: "",
   payerIban: "",
-
   qid: "",
   visaId: "",
   name: "",
@@ -25,14 +24,58 @@ const initialFormData = {
   salary: "",
 }
 
+const Field = ({ label, error, children }) => (
+  <div className="flex flex-col gap-1.5">
+    {label && (
+      <label className="text-xs font-semibold tracking-widest text-slate-400 uppercase">
+        {label}
+      </label>
+    )}
+    {children}
+    {error && (
+      <p className="text-xs text-rose-400 flex items-center gap-1">
+        <span className="inline-block w-1 h-1 rounded-full bg-rose-400" />
+        {error}
+      </p>
+    )}
+  </div>
+)
+
+const Input = ({ error, ...props }) => (
+  <input
+    {...props}
+    className={`
+      h-10 w-full rounded-lg px-3.5 text-sm bg-slate-800/80 text-white
+      border transition-all duration-200 outline-none
+      placeholder:text-slate-500
+      focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500
+      ${error ? "border-rose-500/60 bg-rose-950/20" : "border-slate-700 hover:border-slate-500"}
+    `}
+  />
+)
+
+const SectionCard = ({ title, subtitle, icon, children }) => (
+  <div className="rounded-2xl bg-slate-800/50 border border-slate-700/60 overflow-hidden">
+    <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-700/60 bg-slate-800/80">
+      <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 text-base">
+        {icon}
+      </div>
+      <div>
+        <h3 className="text-sm font-bold text-white tracking-wide">{title}</h3>
+        {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+      </div>
+    </div>
+    <div className="p-6 flex flex-col gap-4">{children}</div>
+  </div>
+)
+
 const EmployeeForm = () => {
   const [formData, setFormData] = useState(initialFormData)
   const [errors, setErrors] = useState({})
+  const [employees, setEmployees] = useState([])
 
   const validateField = (name, value) => {
-    console.log(name,value,'validatingfield')
     const val = value === undefined || value === null ? "" : String(value).trim()
-
     switch (name) {
       case "employerEid":
         if (!val) return "Employer EID is required."
@@ -53,23 +96,20 @@ const EmployeeForm = () => {
         if (!val) return ""
         if (!/^[A-Z0-9]+$/.test(val)) return "IBAN should be uppercase alphanumeric without spaces."
         return ""
-
-      case "qid": {
+      case "qid":
         if (!val) return "Employee QID is required."
         if (!/^\d{11}$/.test(val)) return "Employee QID must be exactly 11 digits."
         return ""
-      }
-      case "name": {
+      case "name":
         if (!val) return "Employee name is required."
-        if (!/^[A-Za-z\s\-']+$/.test(val)) return "Employee name may contain letters, spaces, hyphens or apostrophes."
+        if (!/^[A-Za-z\s\-']+$/.test(val)) return "Name may contain letters, spaces, hyphens or apostrophes."
         return ""
-      }
       case "bank":
         if (!val) return "Employee bank is required."
         return ""
       case "accountNumber":
         if (!val) return "Account number is required."
-        if (!/^[A-Za-z0-9]+$/.test(val)) return "Account number must be numeric or alphanumeric (no special chars)."
+        if (!/^[A-Za-z0-9]+$/.test(val)) return "Account number must be alphanumeric."
         return ""
       case "workingDays":
         if (!val) return "Number of working days is required."
@@ -81,7 +121,6 @@ const EmployeeForm = () => {
         if (isNaN(Number(val))) return "Salary must be a valid number."
         if (Number(val) < 0) return "Salary cannot be negative."
         return ""
-
       case "netSalary":
       case "basicSalary":
       case "extraHours":
@@ -90,17 +129,10 @@ const EmployeeForm = () => {
         if (!val) return ""
         if (isNaN(Number(val))) return `${name} must be a valid number.`
         return ""
-
       case "salaryFrequency":
         if (!val) return ""
-        if (!/^[A-Za-z]$/.test(val)) return "Salary Frequency should be a single letter (e.g. M)."
+        if (!/^[A-Za-z]$/.test(val)) return "Salary Frequency should be a single letter."
         return ""
-
-      case "visaId":
-      case "paymentType":
-      case "notes":
-        return ""
-
       default:
         return ""
     }
@@ -109,7 +141,6 @@ const EmployeeForm = () => {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
-
     const fieldError = validateField(name, value)
     setErrors(prev => {
       const next = { ...prev }
@@ -121,411 +152,261 @@ const EmployeeForm = () => {
 
   const validate = () => {
     const newErrors = {}
-
     Object.keys(formData).forEach(key => {
       const err = validateField(key, formData[key])
       if (err) newErrors[key] = err
     })
-
-    console.log(errors,'this is errors')
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleGenerate = async () => {
-    console.log('hihihiiihihh')
+  const handleAddEmployee = () => {
     if (!validate()) return
+    setEmployees(prev => [...prev, formData])
+    setFormData(prev => ({
+      ...prev,
+      qid: "", visaId: "", name: "", bank: "", accountNumber: "",
+      workingDays: "", netSalary: "", basicSalary: "", extraHours: "",
+      extraIncome: "", deductions: "", notes: "",
+    }))
+  }
 
+  const handleGenerate = async () => {
+    if (employees.length === 0) {
+      alert("Please add at least one employee")
+      return
+    }
     const options = {
       employerEid: formData.employerEid,
       payerEid: formData.payerEid,
       payerQid: formData.payerQid,
       payerBankShortName: formData.payerBankShortName,
       payerIban: formData.payerIban,
+      employees,
     }
     const sifContent = generateSIFContent(formData, options)
-    console.log(sifContent,'this is the sif content')
+    const payload = {
+      employer: {
+        employerEid: formData.employerEid,
+        payerEid: formData.payerEid,
+        payerBankShortName: formData.payerBankShortName,
+      },
+      employees,
+      generatedContent: sifContent,
+    }
     const filenameHint = formData.employerEid || formData.payerBankShortName || "sif"
-    const result = await window.electronAPI.saveSIFFile(sifContent, filenameHint)
-    
+    const result = await window.electronAPI.saveSIFFile(payload, filenameHint)
     if (result.success) {
-      setFormData(initialFormData)
-      setErrors({})
       alert("SIF File Generated Successfully")
+      setEmployees([])
     } else {
-      alert(result.error || "Failed to save SIF file")
+      alert(result.error)
     }
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.form}>
-        <h1 style={styles.header}>SIF Generator</h1>
+    <div className="min-h-screen bg-slate-900 flex items-start justify-center py-10 px-4">
+      <div className="relative w-full max-w-3xl flex flex-col gap-6">
 
-        <div style={styles.section}>
-          <h3 style={styles.sectionHeader}>Employer Data (static)</h3>
-
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="employerEid"
-                style={styles.input}
-                placeholder="Employer EID"
-                inputMode="numeric"
-                value={formData.employerEid}
-                onChange={handleChange}
-              />
-              {errors.employerEid && <p style={styles.error}>{errors.employerEid}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="payerEid"
-                style={styles.input}
-                placeholder="Payer EID (optional)"
-                inputMode="numeric"
-                value={formData.payerEid}
-                onChange={handleChange}
-              />
-              {errors.payerEid && <p style={styles.error}>{errors.payerEid}</p>}
-            </div>
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="payerBankShortName"
-                style={styles.input}
-                placeholder="Payer Bank Short Name"
-                value={formData.payerBankShortName}
-                onChange={handleChange}
-              />
-              {errors.payerBankShortName && <p style={styles.error}>{errors.payerBankShortName}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="payerQid"
-                style={styles.input}
-                placeholder="Payer QID (optional)"
-                value={formData.payerQid}
-                onChange={handleChange}
-              />
-              {errors.payerQid && <p style={styles.error}>{errors.payerQid}</p>}
-            </div>
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="payerIban"
-                style={styles.input}
-                placeholder="Payer IBAN (optional)"
-                value={formData.payerIban}
-                onChange={handleChange}
-              />
-              {errors.payerIban && <p style={styles.error}>{errors.payerIban}</p>}
-            </div>
-            <div style={styles.rowItem}></div>
-          </div>
+        <div className="text-center pt-2 pb-1">
+          <h1 className="text-4xl font-black text-white tracking-tight">
+            SIF Generator
+          </h1>
+    
         </div>
 
-        <div style={styles.section}>
-          <h3 style={styles.sectionHeader}>Employee Data (monthly)</h3>
-
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="qid"
-                style={styles.input}
-                placeholder="Employee QID"
-                value={formData.qid}
-                onChange={handleChange}
-              />
-              {errors.qid && <p style={styles.error}>{errors.qid}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="visaId"
-                style={styles.input}
-                placeholder="Employee Visa ID (optional)"
-                value={formData.visaId}
-                onChange={handleChange}
-              />
+        {employees.length > 0 && (
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-sm font-medium">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {employees.length} employee{employees.length !== 1 ? "s" : ""} queued
             </div>
           </div>
+        )}
 
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="name"
-                style={styles.input}
-                placeholder="Employee Name"
-                value={formData.name}
-                onChange={handleChange}
-              />
-              {errors.name && <p style={styles.error}>{errors.name}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="bank"
-                style={styles.input}
-                placeholder="Employee Bank"
-                value={formData.bank}
-                onChange={handleChange}
-              />
-              {errors.bank && <p style={styles.error}>{errors.bank}</p>}
-            </div>
+        <SectionCard
+          title="Employer Details"
+          icon="🏢"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Employer EID" error={errors.employerEid}>
+              <Input name="employerEid" placeholder="e.g. 12345678" inputMode="numeric"
+                value={formData.employerEid} onChange={handleChange} error={errors.employerEid} />
+            </Field>
+            <Field label="Payer EID (optional)" error={errors.payerEid}>
+              <Input name="payerEid" placeholder="e.g. 98765432" inputMode="numeric"
+                value={formData.payerEid} onChange={handleChange} error={errors.payerEid} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Payer Bank Short Name" error={errors.payerBankShortName}>
+              <Input name="payerBankShortName" placeholder="e.g. QNBA"
+                value={formData.payerBankShortName} onChange={handleChange} error={errors.payerBankShortName} />
+            </Field>
+            <Field label="Payer QID (optional)" error={errors.payerQid}>
+              <Input name="payerQid" placeholder="11-digit QID"
+                value={formData.payerQid} onChange={handleChange} error={errors.payerQid} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Payer IBAN (optional)" error={errors.payerIban}>
+              <Input name="payerIban" placeholder="e.g. QA57QNBA..."
+                value={formData.payerIban} onChange={handleChange} error={errors.payerIban} />
+            </Field>
+            <div /> 
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Employee Details"
+          icon="👤"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Employee QID" error={errors.qid}>
+              <Input name="qid" placeholder="11-digit QID"
+                value={formData.qid} onChange={handleChange} error={errors.qid} />
+            </Field>
+            <Field label="Visa ID (optional)">
+              <Input name="visaId" placeholder="Visa ID"
+                value={formData.visaId} onChange={handleChange} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Full Name" error={errors.name}>
+              <Input name="name" placeholder="Employee full name"
+                value={formData.name} onChange={handleChange} error={errors.name} />
+            </Field>
+            <Field label="Bank" error={errors.bank}>
+              <Input name="bank" placeholder="Employee bank name"
+                value={formData.bank} onChange={handleChange} error={errors.bank} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Account Number" error={errors.accountNumber}>
+              <Input name="accountNumber" placeholder="Bank account number"
+                value={formData.accountNumber} onChange={handleChange} error={errors.accountNumber} />
+            </Field>
+            <Field label="Salary Frequency" error={errors.salaryFrequency}>
+              <Input name="salaryFrequency" placeholder="M = Monthly"
+                value={formData.salaryFrequency} onChange={handleChange} error={errors.salaryFrequency} />
+            </Field>
           </div>
 
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="accountNumber"
-                style={styles.input}
-                placeholder="Employee Account"
-                value={formData.accountNumber}
-                onChange={handleChange}
-              />
-              {errors.accountNumber && <p style={styles.error}>{errors.accountNumber}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="salaryFrequency"
-                style={styles.input}
-                placeholder="Salary Frequency (M)"
-                value={formData.salaryFrequency}
-                onChange={handleChange}
-              />
-              {errors.salaryFrequency && <p style={styles.error}>{errors.salaryFrequency}</p>}
-            </div>
+          <div className="relative flex items-center gap-3 py-1">
+            <div className="flex-1 h-px bg-slate-700" />
+            <span className="text-xs text-slate-500 font-semibold tracking-widest uppercase">Salary Breakdown</span>
+            <div className="flex-1 h-px bg-slate-700" />
           </div>
 
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="workingDays"
-                style={styles.input}
-                placeholder="Number of Working Days"
-                inputMode="numeric"
-                value={formData.workingDays}
-                onChange={handleChange}
-              />
-              {errors.workingDays && <p style={styles.error}>{errors.workingDays}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="netSalary"
-                style={styles.input}
-                placeholder="Net Salary"
-                inputMode="numeric"
-                value={formData.netSalary}
-                onChange={handleChange}
-              />
-              {errors.netSalary && <p style={styles.error}>{errors.netSalary}</p>}
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Working Days" error={errors.workingDays}>
+              <Input name="workingDays" placeholder="e.g. 26" inputMode="numeric"
+                value={formData.workingDays} onChange={handleChange} error={errors.workingDays} />
+            </Field>
+            <Field label="Net Salary" error={errors.netSalary}>
+              <Input name="netSalary" placeholder="e.g. 5000.00" inputMode="numeric"
+                value={formData.netSalary} onChange={handleChange} error={errors.netSalary} />
+            </Field>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Basic Salary" error={errors.basicSalary}>
+              <Input name="basicSalary" placeholder="e.g. 4000.00" inputMode="numeric"
+                value={formData.basicSalary} onChange={handleChange} error={errors.basicSalary} />
+            </Field>
+            <Field label="Extra Hours Pay" error={errors.extraHours}>
+              <Input name="extraHours" placeholder="e.g. 200.00" inputMode="numeric"
+                value={formData.extraHours} onChange={handleChange} error={errors.extraHours} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Extra Income" error={errors.extraIncome}>
+              <Input name="extraIncome" placeholder="e.g. 500.00" inputMode="numeric"
+                value={formData.extraIncome} onChange={handleChange} error={errors.extraIncome} />
+            </Field>
+            <Field label="Deductions" error={errors.deductions}>
+              <Input name="deductions" placeholder="e.g. 100.00" inputMode="numeric"
+                value={formData.deductions} onChange={handleChange} error={errors.deductions} />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Payment Type">
+              <Input name="paymentType" placeholder="Normal Payment"
+                value={formData.paymentType} onChange={handleChange} />
+            </Field>
+            <Field label="Notes / Comments">
+              <Input name="notes" placeholder="Optional notes"
+                value={formData.notes} onChange={handleChange} />
+            </Field>
+          </div>
+        </SectionCard>
 
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="basicSalary"
-                style={styles.input}
-                placeholder="Basic Salary"
-                inputMode="numeric"
-                value={formData.basicSalary}
-                onChange={handleChange}
-              />
-              {errors.basicSalary && <p style={styles.error}>{errors.basicSalary}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="extraHours"
-                style={styles.input}
-                placeholder="Extra hours"
-                inputMode="numeric"
-                value={formData.extraHours}
-                onChange={handleChange}
-              />
-              {errors.extraHours && <p style={styles.error}>{errors.extraHours}</p>}
-            </div>
-          </div>
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={handleAddEmployee}
+            className="
+              h-12 rounded-xl font-bold text-sm tracking-wide
+              bg-slate-700 hover:bg-slate-600 text-white
+              border border-slate-600 hover:border-slate-500
+              transition-all duration-200 active:scale-[0.98]
+              flex items-center justify-center gap-2
+            "
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Employee
+          </button>
 
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="extraIncome"
-                style={styles.input}
-                placeholder="Extra Income"
-                inputMode="numeric"
-                value={formData.extraIncome}
-                onChange={handleChange}
-              />
-              {errors.extraIncome && <p style={styles.error}>{errors.extraIncome}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="deductions"
-                style={styles.input}
-                placeholder="Deductions"
-                inputMode="numeric"
-                value={formData.deductions}
-                onChange={handleChange}
-              />
-              {errors.deductions && <p style={styles.error}>{errors.deductions}</p>}
-            </div>
-          </div>
-
-          <div style={styles.row}>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="paymentType"
-                style={styles.input}
-                placeholder="Payment Type"
-                value={formData.paymentType}
-                onChange={handleChange}
-              />
-              {errors.paymentType && <p style={styles.error}>{errors.paymentType}</p>}
-            </div>
-            <div style={styles.rowItem}>
-              <input
-                type="text"
-                name="notes"
-                style={styles.input}
-                placeholder="Notes / Comments"
-                value={formData.notes}
-                onChange={handleChange}
-              />
-              {errors.notes && <p style={styles.error}>{errors.notes}</p>}
-            </div>
-          </div>
+          <button
+            onClick={handleGenerate}
+            className="
+              h-12 rounded-xl font-bold text-sm tracking-wide
+              bg-blue-600 hover:bg-blue-500 text-white
+              border border-blue-500 hover:border-blue-400
+              transition-all duration-200 active:scale-[0.98]
+              flex items-center justify-center gap-2
+              disabled:opacity-40 disabled:cursor-not-allowed
+            "
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Generate SIF
+          </button>
         </div>
 
-        <button onClick={handleGenerate} style={styles.button}>
-          GENERATE SIF
-        </button>
+        {employees.length > 0 && (
+          <div className="rounded-2xl bg-slate-800/50 border border-slate-700/60 overflow-hidden">
+            <div className="px-6 py-3.5 border-b border-slate-700/60 bg-slate-800/80 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Queued Employees</span>
+              <span className="text-xs text-slate-500">{employees.length} record{employees.length !== 1 ? "s" : ""}</span>
+            </div>
+            <div className="divide-y divide-slate-700/40">
+              {employees.map((emp, i) => (
+                <div key={i} className="flex items-center justify-between px-6 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">{emp.name || "—"}</p>
+                    <p className="text-xs text-slate-400">{emp.bank} · {emp.accountNumber}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-emerald-400">
+                      {emp.netSalary ? `QAR ${Number(emp.netSalary).toLocaleString()}` : "—"}
+                    </p>
+                    <p className="text-xs text-slate-500">{emp.workingDays} days</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      
       </div>
     </div>
   )
-}
-
-const styles = {
-  container: {
-    height:"80%",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    fontFamily: "Arial, sans-serif",
-    backgroundColor: "#1f1f1f",
-    padding: "20px",
-  },
-
-  header: {
-    margin: "0 0 28px 0",
-    color: "#ffffff",
-    fontSize: "32px",
-    fontWeight: "bold",
-    textAlign: "center",
-    letterSpacing: "1.5px",
-  },
-
-  input: {
-    height: "40px",
-    padding: "10px 14px",
-    width: "100%",
-    border: "1.5px solid #ddd",
-    borderRadius: "6px",
-    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.12)",
-    fontSize: "14px",
-    fontFamily: "Arial, sans-serif",
-    boxSizing: "border-box",
-    backgroundColor: "#ffffff",
-    transition: "border-color 0.3s, box-shadow 0.3s",
-  },
-
-  button: {
-    height: "48px",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    marginTop: "24px",
-    fontSize: "16px",
-    fontWeight: "bold",
-    transition: "background-color 0.3s, transform 0.2s",
-  },
-
-  error: {
-    color: "#e74c3c",
-    fontSize: "12px",
-    margin: "5px 0 0 0",
-    fontWeight: "500",
-  },
-
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "24px",
-    width: "60%",
-    maxWidth: "900px",
-    padding: "45px",
-    borderRadius: "14px",
-    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.4)",
-    backgroundColor: "rgba(90, 90, 90, 0.98)",
-    maxHeight: "95vh",
-    overflowY: "auto",
-  },
-
-  section: {
-    padding: "18px 0",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-
-  sectionHeader: {
-    margin: "0 0 12px 0",
-    color: "#ffffff",
-    fontSize: "16px",
-    fontWeight: "bold",
-    textTransform: "uppercase",
-    letterSpacing: "1.2px",
-    borderBottom: "2.5px solid #007bff",
-    paddingBottom: "10px",
-  },
-
-  row: {
-    display: "flex",
-    flexDirection: "row",
-    gap: "18px",
-    width: "100%",
-  },
-
-  rowItem: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    gap: "5px",
-  },
 }
 
 export default EmployeeForm
