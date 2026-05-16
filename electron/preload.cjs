@@ -2,8 +2,8 @@ const { contextBridge, ipcRenderer } = require("electron")
 
 contextBridge.exposeInMainWorld("electronAPI", {
 
-  saveSIFFile: (payload, name) =>
-    ipcRenderer.invoke("save-sif-file", payload, name),
+  saveSIFFile: (payload, payerEid, payerBankShortName, fileCreationDate, fileCreationTime) =>
+    ipcRenderer.invoke("save-sif-file", payload, payerEid, payerBankShortName, fileCreationDate, fileCreationTime),
 
 })
 

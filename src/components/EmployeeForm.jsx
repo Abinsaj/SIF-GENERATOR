@@ -192,10 +192,9 @@ const EmployeeForm = () => {
         payerBankShortName: formData.payerBankShortName,
       },
       employees,
-      generatedContent: sifContent,
+      generatedContent: sifContent.generateSif,
     }
-    const filenameHint = formData.employerEid || formData.payerBankShortName || "sif"
-    const result = await window.electronAPI.saveSIFFile(payload, filenameHint)
+    const result = await window.electronAPI.saveSIFFile(payload, formData.payerEid, formData.payerBankShortName,sifContent.fileCreationDate,sifContent.fileCreationTime)
     if (result.success) {
       alert("SIF File Generated Successfully")
       setEmployees([])
@@ -212,7 +211,6 @@ const EmployeeForm = () => {
           <h1 className="text-4xl font-black text-white tracking-tight">
             SIF Generator
           </h1>
-    
         </div>
 
         {employees.length > 0 && (
@@ -342,7 +340,6 @@ const EmployeeForm = () => {
           </div>
         </SectionCard>
 
-        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={handleAddEmployee}
@@ -393,7 +390,7 @@ const EmployeeForm = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-emerald-400">
-                      {emp.netSalary ? `QAR ${Number(emp.netSalary).toLocaleString()}` : "—"}
+                      {emp.netSalary ? ` ${Number(emp.netSalary).toLocaleString()}` : "—"}
                     </p>
                     <p className="text-xs text-slate-500">{emp.workingDays} days</p>
                   </div>
@@ -402,8 +399,6 @@ const EmployeeForm = () => {
             </div>
           </div>
         )}
-
-      
       </div>
     </div>
   )

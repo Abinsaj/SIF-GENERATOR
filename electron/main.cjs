@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron")
-
 const path = require("path")
 const fs = require("fs")
+
 
 function createWindow() {
 
@@ -27,25 +27,19 @@ function createWindow() {
     )
   }
 
-  // win.webContents.openDevTools()
+  win.webContents.openDevTools()
 }
 
 app.whenReady().then(() => {
   createWindow()
 })
 
-ipcMain.handle("save-sif-file",async (_, payload, name) => {
+ipcMain.handle("save-sif-file",async (_, payload, payerEid, payerBankShortName, fileCreationDate, fileCreationTime) => {
     try {
-      const {
-        employer,
-        employees,
-        generatedContent,
-      } = payload
+      const { employer, employees, generatedContent} = payload
 
-      const { filePath } =
-        await dialog.showSaveDialog({
-
-          defaultPath: `${name}.csv`,
+      const { filePath } = await dialog.showSaveDialog({
+          defaultPath: `SIF_${payerEid}_${payerBankShortName}_${fileCreationDate}_${fileCreationTime}.csv`,
 
           filters: [
             {
@@ -60,40 +54,41 @@ ipcMain.handle("save-sif-file",async (_, payload, name) => {
           success: false,
         }
       }
+      
       let finalContent = generatedContent
-      if (fs.existsSync(filePath)) {
+      // if (fs.existsSync(filePath)) {
 
-        const existingContent =
-          fs.readFileSync(filePath, "utf-8")
+      //   const existingContent =
+      //     fs.readFileSync(filePath, "utf-8")
 
-        const lines = existingContent
-          .split("\n")
-          .filter(Boolean)
+      //   const lines = existingContent
+      //     .split("\n")
+      //     .filter(Boolean)
 
-        const employerRow = lines[1]?.split(",")
+      //   const employerRow = lines[1]?.split(",")
 
-        if (employerRow) {
-          const existingEmployerEid =
-            employerRow[0]
-          const existingPayerEid =
-            employerRow[3]
-          const existingPayerBank =
-            employerRow[5]
-          const currentEmployerMatch =
-            existingEmployerEid === employer.employerEid &&
-            existingPayerEid === employer.payerEid &&
-            existingPayerBank === employer.payerBankShortName
+      //   if (employerRow) {
+      //     const existingEmployerEid =
+      //       employerRow[0]
+      //     const existingPayerEid =
+      //       employerRow[3]
+      //     const existingPayerBank =
+      //       employerRow[5]
+      //     const currentEmployerMatch =
+      //       existingEmployerEid === employer.employerEid &&
+      //       existingPayerEid === employer.payerEid &&
+      //       existingPayerBank === employer.payerBankShortName
 
-          if (!currentEmployerMatch) {
+      //     if (!currentEmployerMatch) {
 
-            return {
-              success: false,
-              error:
-                "Employer details do not match existing file.",
-            }
-          }
-        }
-      }
+      //       return {
+      //         success: false,
+      //         error:
+      //           "Employer details do not match existing file.",
+      //       }
+      //     }
+      //   }
+      // }
       fs.writeFileSync(filePath, finalContent)
       return {
         success: true,

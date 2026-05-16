@@ -1,7 +1,4 @@
-export const generateSIFContent = (
-  data,
-  options = {}
-) => {
+export const generateSIFContent = ( data,options = {}) => {
 
   const employerHeader = [
     "Employer EID",
@@ -21,34 +18,21 @@ export const generateSIFContent = (
   ]
 
   const now = new Date()
-
-  const pad = (n, len = 2) =>
-    String(n).padStart(len, "0")
-
+  const pad = (n, len = 2) => String(n).padStart(len, "0")
   const yyyy = now.getFullYear()
-
   const mm = pad(now.getMonth() + 1)
-
   const dd = pad(now.getDate())
 
-  const fileCreationDate =
-    `${yyyy}${mm}${dd}`
+  const fileCreationDate =`${yyyy}${mm}${dd}`
 
-  const fileCreationTime =
-    `${pad(now.getHours())}${pad(now.getMinutes())}`
+  const fileCreationTime =`${pad(now.getHours())}${pad(now.getMinutes())}`
 
   const salaryYearMonth = `${yyyy}${mm}`
+  const employees = Array.isArray(options.employees) ? options.employees : [data]
 
-  const employees =
-    Array.isArray(options.employees)
-      ? options.employees
-      : [data]
 
-  const totalSalaries =
-    employees.reduce((sum, emp) => {
-
-      const salary =
-        Number(emp.netSalary || emp.salary || 0)
+  const totalSalaries = employees.reduce((sum, emp) => {
+      const salary = Number(emp.netSalary || emp.salary || 0)
 
       return sum + salary
 
@@ -111,16 +95,9 @@ export const generateSIFContent = (
     ]
   )
 
-  const lines = [
-    employerHeader.join(","),
-    employerRow.join(","),
-    "",
-    employeeHeaders.join(","),
+  const lines = [ employerHeader.join(","), employerRow.join(","), "", employeeHeaders.join(","), ...employeeRows.map(row =>row.join(",")) ]
 
-    ...employeeRows.map(row =>
-      row.join(",")
-    )
-  ]
+  const generateSif = lines.join("\n")
 
-  return lines.join("\n")
+  return {generateSif ,fileCreationDate , fileCreationTime}
 }
