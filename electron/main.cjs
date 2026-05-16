@@ -27,7 +27,7 @@ function createWindow() {
     )
   }
 
-  win.webContents.openDevTools()
+
 }
 
 app.whenReady().then(() => {
