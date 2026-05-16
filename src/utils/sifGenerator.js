@@ -11,10 +11,6 @@ export const generateSIFContent = ( data,options = {}) => {
     "Salary Year and Month",
     "Total Salaries",
     "Total records",
-    "",
-    "",
-    "",
-    ""
   ]
 
   const now = new Date()
@@ -51,10 +47,6 @@ export const generateSIFContent = ( data,options = {}) => {
     salaryYearMonth,
     totalSalaries,
     totalRecords,
-    "",
-    "",
-    "",
-    ""
   ]
 
   const employeeHeaders = [
@@ -95,7 +87,10 @@ export const generateSIFContent = ( data,options = {}) => {
     ]
   )
 
-  const lines = [ employerHeader.join(","), employerRow.join(","), "", employeeHeaders.join(","), ...employeeRows.map(row =>row.join(",")) ]
+
+  console.log(employerRow,'this is the employer row')
+
+  const lines = [ employerHeader.join(","), employerRow.join(","), employeeHeaders.join(","), ...employeeRows.map(row =>row.join(",")) ]
 
   const generateSif = lines.join("\n")
 

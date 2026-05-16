@@ -184,6 +184,8 @@ const EmployeeForm = () => {
       payerIban: formData.payerIban,
       employees,
     }
+
+
     const sifContent = generateSIFContent(formData, options)
     const payload = {
       employer: {
@@ -194,6 +196,8 @@ const EmployeeForm = () => {
       employees,
       generatedContent: sifContent.generateSif,
     }
+
+    console.log(sifContent.generateSif,'this is the generated content')
     const result = await window.electronAPI.saveSIFFile(payload, formData.payerEid, formData.payerBankShortName,sifContent.fileCreationDate,sifContent.fileCreationTime)
     if (result.success) {
       alert("SIF File Generated Successfully")
@@ -314,7 +318,7 @@ const EmployeeForm = () => {
                 value={formData.basicSalary} onChange={handleChange} error={errors.basicSalary} />
             </Field>
             <Field label="Extra Hours Pay" error={errors.extraHours}>
-              <Input name="extraHours" placeholder="e.g. 200.00" inputMode="numeric"
+              <Input name="extraHours" placeholder="e.g. 200" inputMode="numeric"
                 value={formData.extraHours} onChange={handleChange} error={errors.extraHours} />
             </Field>
           </div>
